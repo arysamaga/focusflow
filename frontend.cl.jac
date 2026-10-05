@@ -14,7 +14,8 @@ def:pub app -> JsxElement {
         course: str = "",
         due: str = "",
         priority: str = "medium",
-        notes: str = "";
+        notes: str = "",
+        filter: str = "all";
 
     can with entry {
         loadTasks();
@@ -24,6 +25,21 @@ def:pub app -> JsxElement {
     async def addTask(e: FormEvent) -> None;
     async def completeTask(task_id: str) -> None;
     async def deleteTask(task_id: str) -> None;
+
+    def activeCount -> int {
+        return len([t for t in tasks if not t.completed]);
+    }
+
+    def completedCount -> int {
+        return len([t for t in tasks if t.completed]);
+    }
+
+    def highPriorityCount -> int {
+        return len([
+            t for t in tasks
+            if not t.completed and t.priority == "high"
+        ]);
+    }
 
     return
         <div style={{
@@ -49,6 +65,76 @@ def:pub app -> JsxElement {
                     Plan coursework. Prioritize what matters. Get it done.
                 </p>
             </header>
+
+            <div style={{
+    "display": "grid",
+    "gridTemplateColumns": "repeat(3, 1fr)",
+    "gap": "14px",
+    "marginBottom": "24px"
+}}>
+    <div style={{
+        "padding": "20px",
+        "border": "1px solid #e2e8f0",
+        "borderRadius": "14px",
+        "backgroundColor": "#ffffff"
+    }}>
+        <div style={{
+            "fontSize": "13px",
+            "color": "#64748b",
+            "fontWeight": "600"
+        }}>
+            ACTIVE
+        </div>
+        <div style={{
+            "fontSize": "32px",
+            "fontWeight": "700"
+        }}>
+            {activeCount()}
+        </div>
+    </div>
+
+    <div style={{
+        "padding": "20px",
+        "border": "1px solid #e2e8f0",
+        "borderRadius": "14px",
+        "backgroundColor": "#ffffff"
+    }}>
+        <div style={{
+            "fontSize": "13px",
+            "color": "#64748b",
+            "fontWeight": "600"
+        }}>
+            COMPLETED
+        </div>
+        <div style={{
+            "fontSize": "32px",
+            "fontWeight": "700"
+        }}>
+            {completedCount()}
+        </div>
+    </div>
+
+    <div style={{
+        "padding": "20px",
+        "border": "1px solid #e2e8f0",
+        "borderRadius": "14px",
+        "backgroundColor": "#ffffff"
+    }}>
+        <div style={{
+            "fontSize": "13px",
+            "color": "#64748b",
+            "fontWeight": "600"
+        }}>
+            HIGH PRIORITY
+        </div>
+        <div style={{
+            "fontSize": "32px",
+            "fontWeight": "700"
+        }}>
+            {highPriorityCount()}
+        </div>
+    </div>
+</div>
 
             <div style={{
                 "backgroundColor": "#f8fafc",
@@ -169,16 +255,58 @@ def:pub app -> JsxElement {
             </div>
 
             <section>
-                <div style={{
-                    "display": "flex",
-                    "justifyContent": "space-between",
-                    "alignItems": "center"
-                }}>
-                    <h2>My coursework</h2>
-                    <span style={{"color": "#64748b"}}>
-                        {len(tasks)} tasks
-                    </span>
-                </div>
+    <div style={{
+        "display": "flex",
+        "justifyContent": "space-between",
+        "alignItems": "center",
+        "marginBottom": "14px"
+    }}>
+        <h2>My coursework</h2>
+
+        <div style={{
+            "display": "flex",
+            "gap": "8px"
+        }}>
+            <button
+                onClick={lambda { filter = "all"; }}
+                style={{
+                    "padding": "8px 14px",
+                    "border": "1px solid #cbd5e1",
+                    "borderRadius": "8px",
+                    "cursor": "pointer",
+                    "fontWeight": "600"
+                }}
+            >
+                All
+            </button>
+
+            <button
+                onClick={lambda { filter = "active"; }}
+                style={{
+                    "padding": "8px 14px",
+                    "border": "1px solid #cbd5e1",
+                    "borderRadius": "8px",
+                    "cursor": "pointer",
+                    "fontWeight": "600"
+                }}
+            >
+                Active
+            </button>
+
+            <button
+                onClick={lambda { filter = "completed"; }}
+                style={{
+                    "padding": "8px 14px",
+                    "border": "1px solid #cbd5e1",
+                    "borderRadius": "8px",
+                    "cursor": "pointer",
+                    "fontWeight": "600"
+                }}
+            >
+                Completed
+            </button>
+        </div>
+    </div>
 
                 {
                     [
@@ -265,6 +393,9 @@ def:pub app -> JsxElement {
                             </div>
                         </div>
                         for task in tasks
+if filter == "all"
+or (filter == "active" and not task.completed)
+or (filter == "completed" and task.completed)
                     ]
                 }
             </section>
