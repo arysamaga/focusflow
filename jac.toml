@@ -27,3 +27,7 @@ watchdog = ">=3.0.0"
 base_route_app = "app"
 
 [plugins.client]
+
+[plugins.client.mobile]
+app_name = "Focus Flow"
+app_id = "com.focusflow.app"

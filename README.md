@@ -1,503 +1,559 @@
 # FocusFlow
 
-**Name:** Aryan Samaga  
+**Author:** Aryan Samaga  
 **UMID:** 64440397
 
-## Description
+## Overview
 
-FocusFlow is a personal coursework planning application built with Jac. It is designed to help students organize assignments, deadlines, priorities, notes, and coursework progress.
+FocusFlow is a personal coursework planning application built with Jac. It helps students organize assignments, deadlines, courses, priorities, notes, and completion status in one place.
 
-The project contains all four required application components:
+The project includes four components:
 
-1. A persistent Jac server
-2. A browser-based web frontend
-3. A mobile-oriented interface connected to the same planning backend
-4. A Jac command-line interface (CLI)
+- A persistent Jac server/backend
+- A browser-based web frontend
+- A mobile client target
+- A command-line interface (CLI)
 
-The main web application is intended for planning and managing coursework, the mobile interface provides a lightweight way to check planning information, and the CLI provides quick terminal-based planning actions.
+The main web and mobile clients use the same FocusFlow planning application and server-side task model. Planning data is stored persistently by the Jac backend so tasks can remain available across server sessions.
 
 ---
 
 ## Features
 
-### Persistent Planning Server
+### Planning and Tasks
 
-FocusFlow uses Jac nodes and walkers to implement the main planning backend.
+FocusFlow tasks support:
 
-Each `Task` stores:
-
-- Title
+- Task title
 - Course
 - Due date
 - Priority
 - Notes
 - Completion status
 
-The server provides the following Jac walkers:
+Users can:
+
+- Add tasks
+- View tasks
+- Mark tasks as complete
+- Delete tasks
+- Filter tasks
+- Track active and completed work
+- View high-priority task counts
+
+### Dashboard
+
+The web interface includes dashboard statistics for:
+
+- Active tasks
+- Completed tasks
+- High-priority tasks
+
+The interface also provides filters to make it easier to focus on relevant coursework.
+
+### Persistent Planning Data
+
+The main FocusFlow server stores tasks using Jac graph nodes.
+
+Tasks are represented by the `Task` node, while public walkers provide planning operations such as:
 
 - `AddTask`
 - `ListTasks`
 - `CompleteTask`
 - `DeleteTask`
 
-Tasks are represented as persistent Jac graph nodes, allowing planning data to remain available between application sessions.
+Because the planning data is managed by the Jac server, tasks persist across server restarts.
 
 ---
+
+## Architecture
+
+FocusFlow is organized around a shared Jac backend.
+
+```text
+                     FocusFlow
+                         |
+                 Jac Server / API
+                         |
+                 Persistent Task Graph
+                         |
+                  Public Jac Walkers
+                         |
+              +----------+----------+
+              |                     |
+         Web Client             Mobile Client
+         `jac run`          `--client mobile`
+              |                     |
+              +---- Shared Data ----+
+
+                     CLI
+                      |
+             Terminal task workflow
+```
+
+### Server
+
+The server-side planning model is defined in:
+
+```text
+endpoints.sv.jac
+```
+
+The server defines the persistent `Task` node and walkers for creating, listing, completing, and deleting tasks.
 
 ### Web Frontend
 
-The browser interface provides the primary coursework planning experience.
-
-Users can:
-
-- Add coursework tasks
-- Associate tasks with courses
-- Set due dates
-- Select low, medium, or high priority
-- Add optional notes
-- Mark tasks complete
-- Delete tasks
-- Filter between all, active, and completed tasks
-- View planning statistics
-
-The dashboard displays:
-
-- Number of active tasks
-- Number of completed tasks
-- Number of active high-priority tasks
-
-The web frontend communicates with the Jac server through the planning walkers rather than maintaining a separate browser-only task list.
-
----
-
-### Mobile Interface
-
-FocusFlow also provides a lightweight mobile-oriented client interface.
-
-The shared mobile interface is implemented in:
+The main browser interface is implemented with:
 
 ```text
-mobile.cl.jac
-mobile.impl.jac
+frontend.cl.jac
+frontend.impl.jac
+main.jac
 ```
 
-It uses the same server-side `Task` model and `ListTasks` walker used by the main web application.
+The frontend invokes the server walkers to work with persistent planning data.
 
-This means coursework created in the main planner can also be retrieved through the mobile interface from the same persistent planning backend.
+### Mobile
 
-When the main application is running, the mobile client is exposed through the `mobile` client route.
+FocusFlow uses Jac's official mobile client target.
 
-For example, if the API server is running on port 8001:
+Instead of maintaining a separate copy of the planner, the mobile target builds the main FocusFlow application for a mobile environment. This allows the mobile client to use the same planning interface, server-side walkers, and persistent task data as the web client.
+
+This approach keeps the web and mobile versions integrated rather than maintaining separate planning databases.
+
+### CLI
+
+The CLI is located in:
 
 ```text
-http://localhost:8001/cl/mobile
+cli/main.jac
 ```
 
-Use the actual API port printed by `jac run` because Jac may select a different port if the default port is already occupied.
-
-The repository also contains the standalone `mobile/` Jac client project, which provides a small coursework progress interface and demonstrates Jac client/mobile component structure.
-
-To run the standalone mobile client:
-
-```bash
-cd mobile
-jac start main.jac
-```
+It provides a fast terminal-oriented workflow for common planning actions.
 
 ---
 
-### Command-Line Interface
-
-FocusFlow includes a Jac command-line planning interface for quick terminal workflows.
-
-Available actions include:
-
-- Add a task
-- List tasks
-- View today's plan
-- Mark a task complete
-- View planning statistics
-
-Display CLI help:
-
-```bash
-jac run cli/main.jac help
-```
-
-Add a task:
-
-```bash
-jac run cli/main.jac add "Study for Midterm" EECS 2026-10-10 high
-```
-
-List tasks:
-
-```bash
-jac run cli/main.jac list
-```
-
-View today's plan:
-
-```bash
-jac run cli/main.jac today
-```
-
-Mark a task complete:
-
-```bash
-jac run cli/main.jac done TASK_ID
-```
-
-View statistics:
-
-```bash
-jac run cli/main.jac stats
-```
-
-The CLI uses persistent Jac graph data for its terminal planning workflow.
-
----
-
-## Setup and Prerequisites
-
-This project was developed and tested with:
-
-- Jac Language 0.16.7
-- Python / Conda
-- `jac-client`
-- A modern web browser
-
-Verify Jac is installed:
-
-```bash
-jac --version
-```
-
-If the Jac client plugin is not installed in the Python environment used by Jac, install it with:
-
-```bash
-python -m pip install jac-client
-```
-
----
-
-## Running the Main Application
-
-From a fresh checkout, enter the repository root and run:
-
-```bash
-jac run
-```
-
-This is the default project entry point and starts the FocusFlow server and browser client.
-
-Jac prints the actual URLs when startup completes. For example:
-
-```text
-App: http://localhost:8000/
-API: http://localhost:8001/
-```
-
-If one of those ports is already occupied, Jac automatically chooses another available port. Always use the `App:` and `API:` addresses printed in the terminal.
-
-Open the `App:` URL in a browser to use the main FocusFlow web planner.
-
-Stop the application with:
-
-```text
-Ctrl+C
-```
-
----
-
-## Running in Development Mode
-
-The application can also be started with file watching and hot module reloading:
-
-```bash
-jac start --dev
-```
-
----
-
-## Running the Shared Mobile Interface
-
-First start the main FocusFlow application from the repository root:
-
-```bash
-jac run
-```
-
-Find the API URL printed by Jac.
-
-Then open:
-
-```text
-<API URL>/cl/mobile
-```
-
-For example:
-
-```text
-http://localhost:8001/cl/mobile
-```
-
-The mobile route retrieves tasks using the same `ListTasks` walker and persistent `Task` data as the main web application.
-
-A task created through the web planner can therefore be viewed through this mobile interface.
-
----
-
-## Running the Standalone Mobile Client
-
-The repository also includes a standalone Jac mobile/client project.
-
-Run:
-
-```bash
-cd mobile
-jac start main.jac
-```
-
-Jac will compile the client and print the local address where it can be opened.
-
-To check the mobile source without starting it:
-
-```bash
-cd mobile
-jac check main.jac
-```
-
----
-
-## Running the CLI
-
-Run CLI commands from the repository root.
-
-Help:
-
-```bash
-jac run cli/main.jac help
-```
-
-Example workflow:
-
-```bash
-jac run cli/main.jac add "Finish statistics homework" Mathematics 2026-10-06 high
-jac run cli/main.jac list
-jac run cli/main.jac today
-jac run cli/main.jac stats
-```
-
-The `add` command prints the task ID. That ID can be used to complete the task:
-
-```bash
-jac run cli/main.jac done TASK_ID
-```
-
----
-
-## Project Architecture
-
-The main project is organized around Jac's server/client model.
+## Project Structure
 
 ```text
 focusflow/
-├── jac.toml
 ├── main.jac
 ├── endpoints.sv.jac
 ├── frontend.cl.jac
 ├── frontend.impl.jac
 ├── mobile.cl.jac
 ├── mobile.impl.jac
-├── components/
+├── jac.toml
+├── README.md
 ├── cli/
 │   └── main.jac
-├── mobile/
-│   ├── jac.toml
-│   ├── main.jac
-│   └── components/
-└── README.md
+├── components/
+└── mobile/
 ```
 
-### Server Layer
-
-`endpoints.sv.jac` contains the persistent planning data model and server-side walkers.
-
-The central node is:
-
-```text
-Task
-```
-
-The server operations are:
-
-```text
-AddTask
-ListTasks
-CompleteTask
-DeleteTask
-```
-
-### Web Layer
-
-`frontend.cl.jac` defines the primary browser interface and client-side application state.
-
-`frontend.impl.jac` implements behavior that invokes the server walkers.
-
-For example, loading tasks follows the general flow:
-
-```text
-Web UI
-   |
-   v
-ListTasks walker
-   |
-   v
-Persistent Task graph
-```
-
-### Mobile Layer
-
-`mobile.cl.jac` defines the shared mobile-oriented client interface.
-
-`mobile.impl.jac` invokes `ListTasks` against the same backend used by the web application.
-
-The resulting architecture is:
-
-```text
-                 Persistent Task Graph
-                          |
-                    Server Walkers
-                          |
-              +-----------+-----------+
-              |                       |
-        Web Frontend             Mobile Client
-              |                       |
-          ListTasks                 ListTasks
-              |                       |
-              +-----------+-----------+
-                          |
-                    Same Task Data
-```
-
-### CLI Layer
-
-`cli/main.jac` provides terminal-oriented planning functionality including adding tasks, listing tasks, viewing today's plan, completing tasks, and viewing statistics.
-
-The CLI provides a fast alternative workflow for planning from the terminal.
+Jac's mobile setup may also generate native mobile project files for Android and iOS.
 
 ---
 
-## How the Components Work Together
+## Requirements
 
-FocusFlow uses different interfaces for different planning workflows.
+The project was developed using Jac and the `jac-client` plugin.
 
-The **server** provides persistent planning data and the core task operations.
+The main requirements are:
 
-The **web frontend** provides the most complete planning interface for creating, organizing, completing, filtering, and deleting coursework.
+- Python
+- Jac
+- `jac-client`
+- Bun / JavaScript dependencies used by the Jac client tooling
 
-The **shared mobile interface** uses the same server-side `Task` model and `ListTasks` walker, allowing the user to retrieve the same coursework data from a lightweight interface.
-
-The **CLI** provides quick planning actions from the terminal.
-
-Together, these components provide multiple ways to interact with the FocusFlow coursework-planning system while keeping the primary planning logic implemented in Jac.
-
----
-
-## Persistence
-
-The main web/server planning system stores tasks as Jac graph nodes.
-
-Planning data was verified to remain available after stopping and restarting the application.
-
-For example, previously created coursework was successfully retrieved after restarting the server through the `ListTasks` walker.
-
-The CLI also maintains persistent Jac planning data for its terminal workflow.
-
----
-
-## Validation
-
-The complete project can be checked from the repository root with:
+Install `jac-client` if it is not already available:
 
 ```bash
-jac check .
+python -m pip install jac-client
 ```
 
-During final testing, all Jac source files passed the Jac checker.
-
-The CLI can be checked individually with:
+Verify Jac:
 
 ```bash
-jac check cli/main.jac
-```
-
-The standalone mobile application can be checked with:
-
-```bash
-cd mobile
-jac check main.jac
-```
-
-The shared mobile client can be checked from the root with:
-
-```bash
-jac check mobile.cl.jac
+jac --version
 ```
 
 ---
 
-## Fresh Checkout Verification
+# Running FocusFlow
 
-The project is configured so the main application can be started from the repository root with:
+## Web Application and Server
+
+From the repository root, run:
 
 ```bash
 jac run
 ```
 
-This command was verified to:
+The root `jac.toml` configures `main.jac` as the project entry point, so this starts the FocusFlow full-stack application.
 
-1. Compile the Jac client
-2. Start the Jac API server
-3. Start the browser frontend
-4. Serve the FocusFlow application
-5. Load persistent planning data
+Open the local URL printed by Jac in a browser.
 
-No source-code modifications are required after checkout before starting the main application, assuming the prerequisites are installed.
+The web application can then be used to:
+
+1. Add coursework tasks
+2. Assign courses and due dates
+3. Set priorities
+4. Add notes
+5. Mark work complete
+6. Delete tasks
+7. Filter tasks
+8. View planning statistics
 
 ---
 
-## Notable / Impressive Aspects
+## Mobile Client
 
-FocusFlow goes beyond a minimal static task list by using Jac's graph and walker model for a persistent full-stack planning application.
+FocusFlow supports Jac's official mobile client target.
 
-Notable features include:
+### Initial mobile setup
 
-- Persistent graph-based coursework storage
-- Jac server walkers for task operations
-- Full browser-based task management
-- Shared web and mobile access to persistent task data
-- Course organization
-- Due-date tracking
+The first time the mobile target is used, run:
+
+```bash
+jac setup mobile
+```
+
+The project contains mobile configuration in `jac.toml`:
+
+```toml
+[plugins.client.mobile]
+app_name = "Focus Flow"
+app_id = "com.focusflow.app"
+```
+
+### Start the mobile development target
+
+From the repository root:
+
+```bash
+jac start main.jac --dev --client mobile --platform auto --port 8100
+```
+
+The explicit port is useful if the default development port is already being used by another process.
+
+During development, Jac compiles the client for its mobile target while running the FocusFlow application and backend.
+
+The mobile target uses the main FocusFlow application rather than a separate planning database. As a result, the mobile interface works with the same server-side planning model used by the web application.
+
+### Native Android Setup
+
+Building or deploying the application to an Android device/emulator additionally requires native Android development tools, including:
+
+- A JDK compatible with the installed mobile tooling
+- Android SDK
+- Android platform tools / ADB
+- Android Studio or equivalent command-line Android tooling
+
+These are platform prerequisites rather than FocusFlow application dependencies.
+
+For development environments without the native Android SDK configured, Jac can still compile the FocusFlow client for the mobile development target, but native Android deployment requires the Android toolchain.
+
+### iOS
+
+Native iOS development requires the appropriate Apple/Xcode tooling on macOS.
+
+---
+
+# Command-Line Interface
+
+FocusFlow also includes a CLI for quick planning actions from a terminal.
+
+The CLI can be run from the repository root.
+
+## Help
+
+```bash
+jac run cli/main.jac help
+```
+
+## Add a Task
+
+```bash
+jac run cli/main.jac add "Finish homework"
+```
+
+Optional course, due date, and priority values can also be supplied:
+
+```bash
+jac run cli/main.jac add "Study for exam" "ECON 409" "2026-10-08" "high"
+```
+
+## List Tasks
+
+```bash
+jac run cli/main.jac list
+```
+
+## Today's Plan
+
+```bash
+jac run cli/main.jac today
+```
+
+This provides a quick terminal view of unfinished tasks relevant to the current date.
+
+## Mark a Task Complete
+
+First list the tasks:
+
+```bash
+jac run cli/main.jac list
+```
+
+Copy the task ID and run:
+
+```bash
+jac run cli/main.jac done TASK_ID
+```
+
+## Statistics
+
+```bash
+jac run cli/main.jac stats
+```
+
+This reports:
+
+- Total tasks
+- Completed tasks
+- Remaining tasks
+
+---
+
+# Server API and Planning Logic
+
+The main server is implemented in `endpoints.sv.jac`.
+
+## Task Node
+
+Each planning task contains:
+
+```text
+title
+course
+due
+priority
+notes
+completed
+```
+
+## AddTask
+
+Creates a new persistent task.
+
+## ListTasks
+
+Traverses the task graph and reports stored tasks.
+
+## CompleteTask
+
+Finds a task using its Jac ID and marks it complete.
+
+## DeleteTask
+
+Finds a task using its Jac ID and deletes it.
+
+These walkers provide the server-side planning functionality used by the main FocusFlow client.
+
+---
+
+# Persistence
+
+FocusFlow uses Jac's graph-based server data model for its main application.
+
+A task is connected to the root graph when it is created. The application can later traverse those nodes through `ListTasks`.
+
+This means coursework entered into the main planner is not limited to temporary frontend state.
+
+Persistence was tested by creating tasks, restarting the server, and confirming that the stored tasks were still available.
+
+---
+
+# Fresh Checkout Instructions
+
+To test FocusFlow from a fresh checkout:
+
+```bash
+git clone <repository-url>
+cd focusflow
+```
+
+Make sure Jac and the client plugin are installed:
+
+```bash
+jac --version
+python -m pip install jac-client
+```
+
+Then start the main application:
+
+```bash
+jac run
+```
+
+The server and web frontend should start from the repository root.
+
+Create a task in the web interface and verify that it appears in the dashboard.
+
+For mobile development, perform the mobile setup if necessary:
+
+```bash
+jac setup mobile
+```
+
+Then run:
+
+```bash
+jac start main.jac --dev --client mobile --platform auto --port 8100
+```
+
+Native Android/iOS deployment additionally requires the corresponding platform development tools described above.
+
+The CLI can be tested with:
+
+```bash
+jac run cli/main.jac help
+jac run cli/main.jac add "Fresh checkout CLI test"
+jac run cli/main.jac list
+jac run cli/main.jac today
+jac run cli/main.jac stats
+```
+
+---
+
+# Verification
+
+The project can be checked with:
+
+```bash
+jac check .
+```
+
+The main workflows to verify are:
+
+### Web
+
+```bash
+jac run
+```
+
+Then:
+
+- Create a task
+- View it in the task list
+- Mark it complete
+- Delete a task
+- Test the filters and statistics
+
+### Persistence
+
+- Create a task
+- Stop the server
+- Restart with `jac run`
+- Confirm that the task remains available
+
+### Mobile Target
+
+```bash
+jac start main.jac --dev --client mobile --platform auto --port 8100
+```
+
+Confirm that Jac compiles the client for mobile development and starts the FocusFlow application/backend.
+
+### CLI
+
+```bash
+jac run cli/main.jac help
+jac run cli/main.jac add "CLI verification"
+jac run cli/main.jac list
+jac run cli/main.jac today
+jac run cli/main.jac stats
+```
+
+---
+
+# Design Decisions
+
+## Shared Web and Mobile Planning Application
+
+FocusFlow intentionally uses the same core planning application for web and mobile targets.
+
+This provides several benefits:
+
+- A consistent user experience
+- Shared server-side planning logic
+- Shared persistent task data
+- Less duplicated frontend logic
+- Easier maintenance
+- Better integration between components
+
+The mobile version therefore does not maintain an unrelated task store or duplicate backend.
+
+## Jac Walkers as Planning Operations
+
+Planning actions are implemented as Jac walkers rather than keeping all application behavior in frontend state.
+
+This separates the persistent planning logic from the user interface.
+
+## Coursework-Focused Data Model
+
+The planner is designed specifically for student coursework rather than being a generic to-do list.
+
+Course, due date, priority, notes, and completion status make each task useful for academic planning.
+
+## Dashboard Statistics
+
+The dashboard calculates useful high-level planning information so a student can quickly see how much work remains and whether high-priority tasks need attention.
+
+## CLI Workflow
+
+The CLI provides a second style of interaction for users who want to quickly inspect or manage planning information without opening a graphical interface.
+
+---
+
+# Notable / Impressive Aspects
+
+FocusFlow goes beyond a minimal single-page task list in several ways:
+
+- Persistent planning data using Jac graph nodes
+- Server-side task operations implemented with walkers
+- Full-stack Jac web interface
+- Official Jac mobile client target
+- Shared main planning application between web and mobile
+- Coursework-specific task metadata
 - Priority tracking
-- Optional task notes
 - Completion tracking
-- Task deletion
-- Active/completed filtering
 - Dashboard statistics
-- High-priority task metrics
+- Task filtering
 - Terminal planning workflow
-- Mobile-oriented planning interface
-- Responsive web interface
-- Root-level `jac run` startup
-- Jac-first project architecture
+- Fresh-checkout-friendly root configuration
 
-The project demonstrates server-side Jac, client-side Jac, persistent graph data, walker-based APIs, browser UI development, mobile-oriented UI development, and command-line interaction within one personal planning project.
+The project demonstrates how Jac can be used across server logic, persistent data, browser interfaces, mobile targets, and command-line workflows within one planning application.
 
 ---
 
-## Author
+# Technologies
 
-**Aryan Samaga**  
-**UMID:** 64440397
+- Jac
+- Jac graph nodes and walkers
+- Jac client/full-stack tooling
+- React-based Jac client compilation
+- Jac mobile target / Capacitor tooling
+- Bun
+- Git / GitHub
+
+---
+
+# Summary
+
+FocusFlow is a personal coursework planner built around Jac.
+
+Its main server stores persistent planning tasks and exposes planning operations through Jac walkers. The browser frontend provides a dashboard for managing coursework, while Jac's mobile client target allows the same integrated planning application to be built for mobile development. A CLI provides additional terminal-based planning actions.
+
+Together, these components provide multiple ways to interact with a student's planning workflow while demonstrating server, web, mobile, persistent-data, and CLI capabilities in Jac.
