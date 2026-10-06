@@ -10,13 +10,8 @@ import from endpoints {
 
 cl {
     import from .frontend { app as ClientApp }
-    import from .mobile { mobile_app as MobileApp }
 
     def:pub app -> JsxElement {
         return <ClientApp/>;
-    } 
-    def:pub mobile -> JsxElement {
-        return <MobileApp/>;
     }
-
 }
